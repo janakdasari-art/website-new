@@ -13,6 +13,15 @@ triggers {
                  url:'https://github.com/janakdasari-art/website-new.git'
                  echo " pulled code"
                 }
+                }
+
+        stage('custom message'){
+        steps{
+                sh '''
+                echo "pulled code"
+                ...
+                }
+        }
 }
 }
 }
