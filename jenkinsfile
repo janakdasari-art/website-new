@@ -9,7 +9,7 @@ triggers {
 
                 stage (' connect and pull code from github ' ) {
                 steps{
-                 git branch : 'devlop'
+                 git branch : 'devlop',
                  url:'https://github.com/janakdasari-art/website-new.git'
                  echo " pulled code"
                 }
