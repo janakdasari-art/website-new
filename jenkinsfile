@@ -19,6 +19,7 @@ triggers {
         steps{
                 sh '''
                 echo "pulled code"
+                pwd
                 '''
                 }
         }
