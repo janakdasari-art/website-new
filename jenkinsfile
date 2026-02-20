@@ -1,18 +1,19 @@
 pipeline {
 
-        agent { label 'prod'}
+    agent { label 'test' }
 
-triggers {
- githubPush()
-}
-
-        stages{
-        stage('pull when test'){
-        steps{
-
-        git branch : 'devlop',
-                url : 'https://github.com/janakdasari-art/website-new.git'
+    stages {
+        stage('Pull on Test') {
+            steps {
+                git branch: 'develop',
+                    url: 'https://github.com/janakdasari-art/website-new.git'
+            }
         }
-}
-}
+    }
+
+    post {
+        success {
+            build job: 'prod'
+        }
+    }
 }
