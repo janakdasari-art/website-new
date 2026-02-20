@@ -1,28 +1,18 @@
 pipeline {
-        agent any
+
+        agent { label 'test'}
 
 triggers {
-        githubPush()
+ githubPush()
 }
 
-        stages {
-
-                stage (' connect and pull code from github ' ) {
-                steps{
-                 git branch : 'devlop',
-                 url:'https://github.com/janakdasari-art/website-new.git'
-                 echo " pulled code"
-                }
-                }
-
-        stage('custom message'){
+        stages{
+        stage('pull when test'){
         steps{
-                sh '''
-                echo "pulled code"
-                pwd
-                '''
-                }
+
+        git branch : 'devlop',
+                url : 'https://github.com/janakdasari-art/website-new.git'
         }
 }
 }
-
+}
