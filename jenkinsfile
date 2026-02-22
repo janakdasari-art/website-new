@@ -1,0 +1,14 @@
+pipeline {
+  agent {label 'prod'}
+triggers = {
+  githubPush()
+}
+
+stages {
+    stage('Clone Repo') {
+      steps {
+        git branch: 'master',
+            url: 'https://github.com/janakdasari-art/website-new.git'
+      }
+    }
+
