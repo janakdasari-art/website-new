@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'worker2' }
     
     triggers { 
         githubPush()
@@ -17,9 +17,9 @@ pipeline {
         stage('building image and creating a container') {
             steps {
                 sh '''
-                sudo docker rmi janakdasari/project2 || true
-                sudo docker build -t janakdasari/project2 .
-                sudo docker push janakdasari/project2
+                docker rmi janakdasari/project2 || true
+                docker build -t janakdasari/project2 .
+                docker push janakdasari/project2
                 '''
             }
         }
