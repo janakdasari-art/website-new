@@ -1,19 +1,27 @@
 pipeline {
-
-    agent { label 'test' }
-
-    stages {
-        stage('Pull on Test') {
-            steps {
-                git branch: 'develop',
-                    url: 'https://github.com/janakdasari-art/website-new.git'
-            }
-        }
+    agent { label 'worker2' }
+    
+    triggers { 
+        githubPush()
     }
 
-    post {
-        success {
-            build job: 'prod'
+    stages {
+        stage('pull code from git') {
+            steps {
+                git branch: 'devlop',
+                    url: 'https://github.com/janakdasari-art/website-new.git'
+                echo " pulled code "
+            }
+        }
+
+        stage('building image and creating a container') {
+            steps {
+                sh '''
+                sudo docker rmi janakdasari/project2
+                sudo docker build -t janakdasari/project2 .
+                sudo docker push janakdasari/project2
+                '''
+            }
         }
     }
 }
