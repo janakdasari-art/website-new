@@ -20,6 +20,8 @@ pipeline {
                 docker rmi janakdasari/project2 || true
                 docker build -t janakdasari/project2 .
                 docker push janakdasari/project2
+                kubectl apply -f deployment.yaml
+                kubectl apply -f service.yaml
                 '''
             }
         }
