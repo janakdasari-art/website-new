@@ -1,15 +1,13 @@
 pipeline {
-    agent {
-    label 'built-in'
-}
+    agent any
 
     triggers {
         githubPush()
     }
 
     environment {
-        IMAGE_NAME = "janakdasari/website-new"
-        IMAGE_TAG = "latest"
+        IMAGE_NAME = "website-new"
+        CONTAINER_NAME = "website-container"
     }
 
     stages {
@@ -23,35 +21,22 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
+                sh '''
+                    docker build -t $IMAGE_NAME:latest .
+                '''
             }
         }
 
-        stage('Push Image to Docker Hub') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub',
-                    usernameVariable: 'DOCKER_USERNAME',
-                    passwordVariable: 'DOCKER_PASSWORD'
-                )]) {
-                    sh '''
-                        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-                        docker push $IMAGE_NAME:$IMAGE_TAG
-                    '''
-                }
-            }
-        }
-
-        stage('Deploy Latest Container Version') {
+        stage('Deploy Latest Container') {
             steps {
                 sh '''
-                    docker stop website-container || true
-                    docker rm website-container || true
+                    docker stop $CONTAINER_NAME || true
+                    docker rm $CONTAINER_NAME || true
 
                     docker run -d \
-                      --name website-container \
+                      --name $CONTAINER_NAME \
                       -p 80:80 \
-                      $IMAGE_NAME:$IMAGE_TAG
+                      $IMAGE_NAME:latest
                 '''
             }
         }
