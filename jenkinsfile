@@ -1,14 +1,59 @@
 pipeline {
-  agent {label 'prod'}
-triggers = {
-  githubPush()
-}
-
-stages {
-    stage('Clone Repo') {
-      steps {
-        git branch: 'master',
-            url: 'https://github.com/janakdasari-art/website-new.git'
-      }
+    agent {
+        label 'prod'
     }
 
+    triggers {
+        githubPush()
+    }
+
+    environment {
+        IMAGE_NAME = "janakdasari/website-new"
+        IMAGE_TAG = "latest"
+    }
+
+    stages {
+
+        stage('Pull Code from GitHub') {
+            steps {
+                git branch: 'master',
+                    url: 'https://github.com/janakdasari-art/website-new.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
+            }
+        }
+
+        stage('Push Image to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'DOCKER_USERNAME',
+                    passwordVariable: 'DOCKER_PASSWORD'
+                )]) {
+                    sh '''
+                        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+                        docker push $IMAGE_NAME:$IMAGE_TAG
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy Latest Container Version') {
+            steps {
+                sh '''
+                    docker stop website-container || true
+                    docker rm website-container || true
+
+                    docker run -d \
+                      --name website-container \
+                      -p 80:80 \
+                      $IMAGE_NAME:$IMAGE_TAG
+                '''
+            }
+        }
+    }
+}
