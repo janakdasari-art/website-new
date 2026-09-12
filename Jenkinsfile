@@ -47,16 +47,18 @@ pipeline {
         stage('Deploy to Application Server') {
             steps {
                 sh '''
-                    ssh -o StrictHostKeyChecking=no ubuntu@$APP_SERVER "
-                        docker pull $DOCKER_IMAGE
-                        docker stop $CONTAINER_NAME || true
-                        docker rm $CONTAINER_NAME || true
-                        docker run -d \
-                            --name $CONTAINER_NAME \
-                            --restart unless-stopped \
-                            -p 80:80 \
-                            $DOCKER_IMAGE
-                    "
+                    ssh -i /var/lib/jenkins/.ssh/id_ed25519 \
+                        -o StrictHostKeyChecking=no \
+                        ubuntu@$APP_SERVER "
+                            docker pull $DOCKER_IMAGE &&
+                            docker stop $CONTAINER_NAME || true
+                            docker rm $CONTAINER_NAME || true
+                            docker run -d \
+                                --name $CONTAINER_NAME \
+                                --restart unless-stopped \
+                                -p 80:80 \
+                                $DOCKER_IMAGE
+                        "
                 '''
             }
         }
