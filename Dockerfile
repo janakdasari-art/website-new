@@ -1,6 +1,12 @@
-FROM ubuntu
-RUN apt-get update 
-RUN apt install apache2 -y
-ADD index.html /var/www/html
+FROM ubuntu:24.04
+
+RUN apt-get update && \
+    apt-get install -y apache2 && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY index.html /var/www/html/
+COPY images /var/www/html/images/
+
 EXPOSE 80
-ENTRYPOINT apachectl -D FOREGROUND
+
+CMD ["apachectl", "-D", "FOREGROUND"]
