@@ -6,8 +6,9 @@ pipeline {
     }
 
     environment {
-        IMAGE_NAME = "website-new"
+        DOCKER_IMAGE = "YOUR_DOCKERHUB_USERNAME/website-new:latest"
         CONTAINER_NAME = "website-container"
+        APP_SERVER = "10.0.2.144"
     }
 
     stages {
@@ -22,22 +23,45 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                    docker build -t $IMAGE_NAME:latest .
+                    docker build -t $DOCKER_IMAGE .
                 '''
             }
         }
 
-        stage('Deploy Latest Container') {
+        stage('Push Image to Docker Hub') {
             steps {
-                sh '''
-                    docker stop $CONTAINER_NAME || true
-                    docker rm $CONTAINER_NAME || true
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DOCKER_USERNAME',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )
+                ]) {
+                    sh '''
+                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                        docker push $DOCKER_IMAGE
+                        docker logout
+                    '''
+                }
+            }
+        }
 
-                    docker run -d \
-                      --name $CONTAINER_NAME \
-                      -p 80:80 \
-                      $IMAGE_NAME:latest
-                '''
+        stage('Deploy to Application Server') {
+            steps {
+                sshagent(['app-server-ssh']) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no ubuntu@$APP_SERVER "
+                            docker pull $DOCKER_IMAGE &&
+                            docker stop $CONTAINER_NAME || true
+                            docker rm $CONTAINER_NAME || true
+                            docker run -d \
+                                --name $CONTAINER_NAME \
+                                --restart unless-stopped \
+                                -p 80:80 \
+                                $DOCKER_IMAGE
+                        "
+                    '''
+                }
             }
         }
     }
