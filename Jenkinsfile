@@ -6,7 +6,9 @@ pipeline {
     }
 
     environment {
-        DOCKER_IMAGE = "YOUR_DOCKERHUB_USERNAME/website-new:latest"
+        DOCKER_USERNAME = "janakdasari"
+        DOCKER_TOKEN = "dckr_pat_v6QD_JshfDuCo22vGuo1dlKaSYo"
+        DOCKER_IMAGE = "janakdasari/website-new:latest"
         CONTAINER_NAME = "website-container"
         APP_SERVER = "10.0.2.144"
     }
@@ -30,38 +32,32 @@ pipeline {
 
         stage('Push Image to Docker Hub') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub-credentials',
-                        usernameVariable: 'DOCKER_USERNAME',
-                        passwordVariable: 'DOCKER_PASSWORD'
-                    )
-                ]) {
-                    sh '''
-                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                        docker push $DOCKER_IMAGE
-                        docker logout
-                    '''
-                }
+                sh '''
+                    echo "$DOCKER_TOKEN" | docker login \
+                        -u "$DOCKER_USERNAME" \
+                        --password-stdin
+
+                    docker push $DOCKER_IMAGE
+
+                    docker logout
+                '''
             }
         }
 
         stage('Deploy to Application Server') {
             steps {
-                sshagent(['app-server-ssh']) {
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no ubuntu@$APP_SERVER "
-                            docker pull $DOCKER_IMAGE &&
-                            docker stop $CONTAINER_NAME || true
-                            docker rm $CONTAINER_NAME || true
-                            docker run -d \
-                                --name $CONTAINER_NAME \
-                                --restart unless-stopped \
-                                -p 80:80 \
-                                $DOCKER_IMAGE
-                        "
-                    '''
-                }
+                sh '''
+                    ssh -o StrictHostKeyChecking=no ubuntu@$APP_SERVER "
+                        docker pull $DOCKER_IMAGE
+                        docker stop $CONTAINER_NAME || true
+                        docker rm $CONTAINER_NAME || true
+                        docker run -d \
+                            --name $CONTAINER_NAME \
+                            --restart unless-stopped \
+                            -p 80:80 \
+                            $DOCKER_IMAGE
+                    "
+                '''
             }
         }
     }
